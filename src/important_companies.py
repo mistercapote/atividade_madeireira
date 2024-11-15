@@ -154,4 +154,3 @@ print(f"Numero de Empresas outliers (importantes quanto grau: {manejos_outliers}
 
 
 
-
