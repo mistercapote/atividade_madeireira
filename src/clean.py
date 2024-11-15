@@ -2,7 +2,11 @@ import pandas as pd
 
 df1 = pd.read_csv("data/df_01.csv", low_memory=False)
 df2 = pd.read_csv("data/df_02.csv", low_memory=False)
-df = pd.concat([df1, df2], ignore_index=True)
+df3 = pd.read_csv("data/df_03.csv", low_memory=False)
+df4 = pd.read_csv("data/df_04.csv", low_memory=False)
+df5 = pd.read_csv("data/df_05.csv", low_memory=False)
+df6 = pd.read_csv("data/df_06.csv", low_memory=False)
+df = pd.concat([df1, df2, df3, df4, df5, df6], ignore_index=True)
 
 origem = df[["CPF_CNPJ_Rem", "LatOrigem", "LongOrigem", "TpRem"]].rename(
     columns={
