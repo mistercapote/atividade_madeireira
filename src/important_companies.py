@@ -141,6 +141,17 @@ print(f"Q2 (50% - Mediana): {q2}")
 print(f"Q3 (75%): {q3}")
 print(f"Limite superior: {limite_superior}")
 
+#  Numeros de empresas outliers
+manejos_outliers = 0 
+
+for emp in graus_num:
+  if emp>= limite_superior:
+    manejos_outliers+=1
+
+print(f"Numero de Empresas outliers (importantes quanto grau: {manejos_outliers} ")
+
+
+
 
 
 
