@@ -255,7 +255,7 @@ print(f"El mejor nodo final es: {mnodo}")
 ###################################################### ESTO LE METI ##########################################################################################
 
 # Parámetros
-k = 3
+k = 2
 
 # Encontrar los caminos más probables
 paths, target_ordered = dijkstra(G, mnodo, emp_type, k)
