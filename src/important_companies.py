@@ -4,39 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-
-
-def create_graph(transports):
-    graph = {}
-
-    # Creating the graph with the list of transports
-    for i,transport in tqdm(transports.iterrows()):
-        id_emp_orig = transport['node_src']
-        id_emp_dest = transport['node_dest']
-
-        volume = transport['vol']
-
-        # Graph is a dict (source) -> (destination, weight)
-        if graph.get(id_emp_orig) is None:
-            # if source is not in the graph we need to map it as source to the destination
-            graph[id_emp_orig] = {id_emp_dest: {'weight': volume }}
-        else:
-            # if source is already in the graph
-            # 1. new destination from that source: create the edge
-            # 2. source already mapped to destination: increase the volume in that edge
-            if graph[id_emp_orig].get(id_emp_dest) is None:
-                graph[id_emp_orig][id_emp_dest] = {'weight': volume }
-            else:
-                graph[id_emp_orig][id_emp_dest]['weight'] += volume
-
-    # In this context we want to maximize paths over the volume
-    # Since most functions minimizes over the weight of the edges,
-    # we need to invert the relation
-    for source, targets in graph.items():
-        for target, volume in targets.items():
-            graph[source][target]['weight'] = -1 * volume['weight']
-
-    return nx.DiGraph(graph)
+from modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
+from data_cleaner import convert_id_to_str
 
 # transportes_junho = pd.read_csv('../data/df_06.csv')
 transportes_julho = pd.read_csv('data/df_07.csv')
@@ -46,109 +15,111 @@ transportes_outubro= pd.read_csv('data/df_10.csv')
 transportes_novembro = pd.read_csv('data/df_11.csv')
 transportes_dezembro = pd.read_csv('data/df_12.csv')
 
-transporte_primeiro_semestre= pd.concat([transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
+tranporte_segundo_semestre= pd.concat([transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
 
-df_tran = transporte_primeiro_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
+df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
 df_tran = df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 
 
 #  Convertendo todos os nós para str
-df_tran['CPF_CNPJ_Rem'] = df_tran['CPF_CNPJ_Rem'].astype(str)
-df_tran['CPF_CNPJ_Des'] = df_tran['CPF_CNPJ_Des'].astype(str)
+df_tran = convert_id_to_str(df_tran)
 
 #  Criando dicionario com os tipos de cada empresa
 emp_type = {}
+nodes = pd.read_csv('data/nodes.csv')
 
 
+for i,node in nodes.iterrows():
+  emp_type[node['CPF_CNPJ']] = node['Tipo']
 
-for i,node in node_df.iterrows():
-  emp_type[node['CNPJ_CPF']] = node['type']
-  
-arestas = transporte_primeiro_semestre[['CPF_CNPJ_Rem', 'CPF_CNPJ_Des', 'Volume']].rename(columns={'CPF_CNPJ_Rem': 'node_src', 'CPF_CNPJ_Des': 'node_dest', 'Volume': 'vol'})
+nodes_new = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
 
-#  Removendo loops
-arestas_1 = arestas[arestas['node_dest']!=arestas['node_src']]
-
-graph = create_graph(arestas_1)
+#  Criando grafo e adicionando nós 
+G = nx.DiGraph()
+G.add_nodes_from(nodes_new)
 
 
-def get_concessions(list_nodes,emp_type): 
-  # As concessões são todas emps marcadas como MANEJO,1
-  # (fonte legal e extratores de madeira)
+# Cria as arestas com base nas transações e com peso = volume
+edges = []
 
-  count = 0
-  for node in list_nodes:
-    if emp_type[node] == 'MANEJO':
-      count+=1
+for row in df_tran.iterrows():
+    # Ignora laços
+    if str(row[1]['CPF_CNPJ_Rem']) != str(row[1]['CPF_CNPJ_Des']):
+        edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
 
-  return count
+G.add_edges_from(edges)
 
-G_orig_weight = graph.copy()
 
-def print_graph_metrics(graph, emp_type):
-  # Print overall graph metrics
+#  Empresas do tipo Patio que transportam para empresas do tipo pátio
+df_pto = df_tran[(df_tran['TpRem'] == 'PTO_IBAMA') & (df_tran['TpDes'] == 'PTO_IBAMA')]
+df_pto = df_pto.groupby('CPF_CNPJ_Rem')['Volume'].sum().reset_index()
 
-  g_aux = G_orig_weight.to_undirected()
 
-  # Number of connected components in the graph
-  components_len = []
-  for item in nx.connected_components(g_aux):
-    components_len.append((len(item),item))
+nodes_pto = set(df_pto['CPF_CNPJ_Rem'])
 
-  print(f'Total Graph: {graph}')
-  print(f'Number of components: {len(components_len)}')
-  print(f'Number of concessions: {get_concessions(graph.nodes(),emp_type)}')
 
-  print()
-  print()
-  print('Components with more than 1000 nodes')
-  for c in components_len:
-    if c[0] > 1000:
-      subg = graph.subgraph(c[1])
+emp_pto_degree = {}
 
-      print(f'Subgraph: {subg}')
-      print(f'Number of concessions: {get_concessions(subg.nodes(),emp_type)}')
-      print()
-      print()
-      
-print_graph_metrics(G_orig_weight, emp_type)
+for node in nodes_pto:
+    emp_pto_degree[node]= G.degree(node)
 
-nodes_manejo = [chave for chave, valor in emp_type.items() if valor == "MANEJO"]
+graus = list(emp_pto_degree.values())
 
-graus_manejo = {}
 
-for node in nodes_manejo:
-    grau = graph.degree(node)
-    graus_manejo[node] = grau
-
-        
-print(f"Quantidade de vertices do tipo manejo: {len(nodes_manejo)}")
-
-print(f"Grau minimo: {min(graus_manejo.values())}")
-print(f"Grau Máximo: {max(graus_manejo.values())}")
-
-graus_num = list(graus_manejo.values())
-print(f"Grau:    {graus_num}")
-q1 = np.quantile(graus_num, 0.25)  # Primeiro quartil (25%)
-q2 = np.quantile(graus_num, 0.5)   # Segundo quartil (50%, ou mediana)
-q3 = np.quantile(graus_num, 0.75)  # Terceiro quartil (75%)
+# print(f"Grau:    {graus}")
+q1 = np.quantile(graus, 0.25)  # Primeiro quartil (25%)
+q2 = np.quantile(graus, 0.5)   # Segundo quartil (50%, ou mediana)
+q3 = np.quantile(graus, 0.75)  # Terceiro quartil (75%)
 interquartil = q3-q1
-limite_superior = q2 + 1.5*interquartil
+limite_superior = q3 + 1.5*interquartil
 print(f"Q1 (25%): {q1}")
 print(f"Q2 (50% - Mediana): {q2}")
 print(f"Q3 (75%): {q3}")
 print(f"Limite superior: {limite_superior}")
+print(f"Máximo: {max(graus)}")
 
-#  Numeros de empresas outliers
-manejos_outliers = 0 
 
-for emp in graus_num:
+pto_outliers = 0 
+
+for emp in graus:
   if emp>= limite_superior:
-    manejos_outliers+=1
+    pto_outliers+=1
 
-print(f"Numero de Empresas outliers (importantes quanto grau: {manejos_outliers} ")
+print(f"Numero de Empresas Patio outliers (importantes quanto grau): {pto_outliers} ")
+
+print()
+numero_original_de_componentes =  nx.number_weakly_connected_components(G)
+print(f"Número total de componentes conexas: {numero_original_de_componentes}")
 
 
+#  Adicionando  coluna de grau de um node
+df_pto['Grau'] = df_pto['CPF_CNPJ_Rem'].apply(lambda x: G.degree(x))
 
 
+#  Filtrando os outliers do tipo patio
 
+df_pto_outliers = df_pto[df_pto['Grau']>= limite_superior]
+df_pto_outliers.loc[:, 'is_bridge_linkage'] = False
+
+
+# Analisando  o numero de componentes que 
+#  são obtidas ao remover os vertices pto 
+
+components = []
+
+print()
+print("Analisando componentes dos possíveis pontos de articulação")
+print("...")
+for node in list(df_pto_outliers['CPF_CNPJ_Rem']):
+    SG = nx.subgraph_view(G, filter_node= lambda x: x != node)
+    components.append(nx.number_weakly_connected_components(SG))
+print("Analisado")
+
+df_pto_outliers['Conected_Components']= components
+df_pto_outliers.loc[df_pto_outliers['Conected_Components'] > numero_original_de_componentes, 'is_bridge_linkage'] = True
+
+print()
+qtd_de_pontes_de_articulacao =  df_pto_outliers['is_bridge_linkage'].sum()
+print(f"Das empresas importantes, quantas são ponts de  de articulação: {qtd_de_pontes_de_articulacao}")
+
+get_timberflow(G, emp_type)
