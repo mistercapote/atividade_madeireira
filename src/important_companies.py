@@ -48,20 +48,18 @@ transportes_dezembro = pd.read_csv('data/df_12.csv')
 
 transporte_primeiro_semestre= pd.concat([transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
 
-rem_df = transporte_primeiro_semestre[['CPF_CNPJ_Rem', 'TpRem']].rename(columns={'CPF_CNPJ_Rem': 'CNPJ_CPF', 'TpRem': 'type'})
-rem_df['source'] = 'Remetente'
+df_tran = transporte_primeiro_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
+df_tran = df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 
-# Criar DataFrame para CPF_CNPJ_Des e TpDes
-des_df = transporte_primeiro_semestre[['CPF_CNPJ_Des', 'TpDes']].rename(columns={'CPF_CNPJ_Des': 'CNPJ_CPF', 'TpDes': 'type'})
-des_df['source'] = 'Destinatário'
 
-# Concatenar ambos os DataFrames
-node_df= pd.concat([rem_df, des_df], ignore_index=True)
-node_df.drop_duplicates('CNPJ_CPF')
+#  Convertendo todos os nós para str
+df_tran['CPF_CNPJ_Rem'] = df_tran['CPF_CNPJ_Rem'].astype(str)
+df_tran['CPF_CNPJ_Des'] = df_tran['CPF_CNPJ_Des'].astype(str)
 
-# reading nodes and creating a dict for easy use
-
+#  Criando dicionario com os tipos de cada empresa
 emp_type = {}
+
+
 
 for i,node in node_df.iterrows():
   emp_type[node['CNPJ_CPF']] = node['type']
