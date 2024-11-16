@@ -43,7 +43,7 @@ def get_concessions(list_nodes: list,emp_type: dict)-> int:
 
   return count
 
-def get_sink_nodes(graph: nx.graph, emp_type: dict)- dict:
+def get_sink_nodes(graph: nx.graph, emp_type: dict)-> dict:
   # If node is marked as FINAL, he is a sink
   # It is the final destination of the timber chain
 

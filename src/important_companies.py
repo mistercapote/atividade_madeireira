@@ -1,10 +1,9 @@
 import pandas as pd
 import networkx as nx
-import matplotlib.pyplot as plt
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-from modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
+
 from data_cleaner import convert_id_to_str
 
 # transportes_junho = pd.read_csv('../data/df_06.csv')
@@ -25,12 +24,6 @@ df_tran = df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['V
 df_tran = convert_id_to_str(df_tran)
 
 #  Criando dicionario com os tipos de cada empresa
-emp_type = {}
-nodes = pd.read_csv('data/nodes.csv')
-
-
-for i,node in nodes.iterrows():
-  emp_type[node['CPF_CNPJ']] = node['Tipo']
 
 nodes_new = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
 
@@ -122,4 +115,4 @@ print()
 qtd_de_pontes_de_articulacao =  df_pto_outliers['is_bridge_linkage'].sum()
 print(f"Das empresas importantes, quantas são ponts de  de articulação: {qtd_de_pontes_de_articulacao}")
 
-get_timberflow(G, emp_type)
+
