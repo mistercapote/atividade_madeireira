@@ -5,33 +5,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
+from data_cleaner import convert_id_to_str
+
 
 def create_graph(transports: pd.DataFrame):
-    graph = {}
 
-    # Creating the graph with the list of transports
-    for i,transport in tqdm(transports.iterrows()):
-        id_emp_orig = transport['node_src']
-        id_emp_dest = transport['node_dest']
-
-        volume = transport['vol']
-
-        # Graph is a dict (source) -> (destination, weight)
-        if graph.get(id_emp_orig) is None:
-            # if source is not in the graph we need to map it as source to the destination
-            graph[id_emp_orig] = {id_emp_dest: {'weight': volume }}
-        else:
-            # if source is already in the graph
-            # 1. new destination from that source: create the edge
-            # 2. source already mapped to destination: increase the volume in that edge
-            if graph[id_emp_orig].get(id_emp_dest) is None:
-                graph[id_emp_orig][id_emp_dest] = {'weight': volume }
-            else:
-                graph[id_emp_orig][id_emp_dest]['weight'] += volume
-
-    return  graph
-
-
+    #  Criando o grafd
+    G = nx.DiGraph()
+    
+    
+    
+    # Adicionando nós 
+    nodes = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
+    G.add_nodes_from(nodes)
+    
+    
+    edges= []
+    
+    for row in df_tran.iterrows():
+      # Ignora laços
+      if str(row[1]['CPF_CNPJ_Rem']) != str(row[1]['CPF_CNPJ_Des']):
+          edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
+      
+    G.add_edges_from(edges)
+    
+    return G
+    
 def get_concessions(list_nodes: list,emp_type: dict)-> int: 
   # As concessões são todas emps marcadas como MANEJO,1
   # (fonte legal e extratores de madeira)
