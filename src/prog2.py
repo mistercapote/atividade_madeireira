@@ -13,10 +13,15 @@ import plotly.express as px
 # com arestas separadas para ver se os caminhos encontrados fazem sentido
 # com relacao a data.
 
-
-
-def create_graph(transports):
+def create_graph(transports, date_range, product_filter=None):
     graph = {}
+    
+    # Filtrar el DataFrame según el tipo de producto y rango de fechas, si se proporcionan
+    if product_filter:
+        transports = transports[transports['id_product'] == product_filter]
+    if date_range:
+        transports = transports[(transports['date'] >= date_range[0]) & (transports['date'] <= date_range[1])]
+    
     for i, transport in tqdm(transports.iterrows()):
         id_emp_orig = transport['node_src']
         id_emp_dest = transport['node_dest']
@@ -48,7 +53,8 @@ for i, node in emps.iterrows():
     emp_type[node['id_emp']] = node['type']
 
 # Crear el grafo
-graph = create_graph(transports)
+date_range = ('2017-01-01', '2017-05-30')
+graph = create_graph(transports, date_range)
 G_orig_weight = graph.copy()
 
 # Función para obtener concesiones
