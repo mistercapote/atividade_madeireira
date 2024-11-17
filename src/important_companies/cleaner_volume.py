@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-from modules import *
+from important_companies.modules import *
 import glob
 
 
@@ -9,6 +9,7 @@ import glob
 path = '..\\data'
 csv_files = glob.glob(path + '/*.csv')
 df = pd.concat(map(pd.read_csv, glob.glob(path + "/*.csv")))
+
 
 # Separa os dados das transações somando o volume das duplicadas
 df_tran = df[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]

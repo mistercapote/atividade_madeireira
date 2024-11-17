@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-from modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
+from modules import  get_concessions, get_sink_nodes, get_timberflow
 from data_cleaner import convert_id_to_str
 
 
@@ -18,18 +18,14 @@ transportes_novembro = pd.read_csv('data/df_11.csv')
 transportes_dezembro = pd.read_csv('data/df_12.csv')
 
 
-# Teste com mês de Janeiro-
 tranporte_segundo_semestre= pd.concat([transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
 
 df_tran_jan = transportes_janeiro[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
 df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
-
-df_tran_jan = df_tran_jan.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 df_tran = df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 
 #  Convertendo todos os nós para str
 df_tran = convert_id_to_str(df_tran)
-df_tran_jan = convert_id_to_str(df_tran)
 
 #  Criando dicionario com os tipos de cada empresa
 
@@ -50,22 +46,37 @@ for row in df_tran.iterrows():
 
 G.add_edges_from(edges)
 
+
 emp_type = {}
-nodes = pd.read_csv('data/nodes.csv')
 
 
+
+df_nodes = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem']].rename(columns={'CPF_CNPJ_Rem': 'CPF_CNPJ', 'TpRem': 'Tipo'})
+df_nodes = pd.concat([df_nodes, tranporte_segundo_semestre[['CPF_CNPJ_Des', 'TpDes']].rename(columns={'CPF_CNPJ_Des': 'CPF_CNPJ', 'TpDes': 'Tipo'})]).drop_duplicates('CPF_CNPJ')
+
+
+
+origem = tranporte_segundo_semestre[["CPF_CNPJ_Rem", "LatOrigem", "LongOrigem", "TpRem"]].rename(
+    columns={
+    'CPF_CNPJ_Rem': 'id_emp', 
+    'LatOrigem': 'latitude', 
+    'LongOrigem': 'longitude', 
+    'TpRem': 'type'
+})
+destino = tranporte_segundo_semestre[["CPF_CNPJ_Des", "LatDestino", "LongDestino", "TpDes"]].rename(
+    columns={
+    'CPF_CNPJ_Des': 'id_emp', 
+    'LatDestino': 'latitude', 
+    'LongDestino': 'longitude', 
+    'TpDes': 'type'
+})
+
+nodes = pd.concat([origem, destino], ignore_index=True)
+nodes.drop_duplicates("id_emp", inplace=True)
+
+# nodes.to_csv("nodes.csv", index=False)
 for i,node in nodes.iterrows():
-  emp_type[node['CPF_CNPJ']] = node['Tipo']
+  emp_type[str(node['id_emp'])] = node['type']
 
-print("TimberFlow Segundo Semestre")
+
 get_timberflow(G, emp_type)
-print()
-
-
-
-
-
-
-
-
-
