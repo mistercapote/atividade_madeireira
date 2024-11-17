@@ -2,10 +2,13 @@ import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 from auxiliar import *
+import glob
 
 
-# Guarda os dados do csv num DataFrame
-df = pd.read_csv('..\\data\\df_01.csv')
+# Guarda os dados dos csvs num DataFrame
+path = '..\\data'
+csv_files = glob.glob(path + '/*.csv')
+df = pd.concat(map(pd.read_csv, glob.glob(path + "/*.csv")))
 
 # Separa os dados das transações somando o volume das duplicadas
 df_tran = df[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
@@ -67,8 +70,9 @@ valid_patios = set()
 for each_manejo in manejos:
     T = nx.bfs_tree(G, each_manejo)
     if finais.intersection(set(T.nodes())) != set():
-        # Salva os pátios que são conectados a um manejo e um final
+        # Salva os pátios que são conectados a um manejo e a um final
         valid_patios.update(all_important_patios.intersection(set(T.nodes())))
 
-print(len(all_important_patios))
-print(len(valid_patios))
+# Retira os pátios importantes e verifica o fluxo no subgrafo criado
+for each_valid_patio in valid_patios():
+    SG = nx.Subgraph
