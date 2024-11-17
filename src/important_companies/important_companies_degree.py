@@ -3,7 +3,7 @@ import networkx as nx
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-from modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
+from modules import  get_concessions, get_sink_nodes, get_timberflow
 from data_cleaner import convert_id_to_str
 
 # transportes_junho = pd.read_csv('../data/df_06.csv')
@@ -20,14 +20,28 @@ df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', '
 df_tran= df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 df_tran = convert_id_to_str(df_tran)
 
-#  Criando grafo
-G = create_graph(df_tran)
 
 #  Empresas do tipo Patio q_ue transportam para empresas do tipo pátio
 df_pto = df_tran[(df_tran['TpRem'] == 'PTO_IBAMA') & (df_tran['TpDes'] == 'PTO_IBAMA')]
 df_pto = df_pto.groupby('CPF_CNPJ_Rem')['Volume'].sum().reset_index()
 
+nodes = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
 nodes_pto = set(df_pto['CPF_CNPJ_Rem'])
+
+#  Criando grafo
+G = nx.DiGraph()
+G.add_nodes_from(nodes)
+
+
+# Cria as arestas com base nas transações e com peso = volume
+edges = []
+for row in df_tran.iterrows():
+    # Ignora laços
+    if str(row[1]['CPF_CNPJ_Rem']) != str(row[1]['CPF_CNPJ_Des']):
+        edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
+G.add_edges_from(edges)
+
+
 
 emp_pto_degree = {}
 
