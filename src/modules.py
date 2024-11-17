@@ -8,29 +8,6 @@ from tqdm import tqdm
 from data_cleaner import convert_id_to_str
 
 
-def create_graph(transports: pd.DataFrame):
-
-    #  Criando o grafd
-    G = nx.DiGraph()
-    
-    
-    
-    # Adicionando nós 
-    nodes = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
-    G.add_nodes_from(nodes)
-    
-    
-    edges= []
-    
-    for row in df_tran.iterrows():
-      # Ignora laços
-      if str(row[1]['CPF_CNPJ_Rem']) != str(row[1]['CPF_CNPJ_Des']):
-          edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
-      
-    G.add_edges_from(edges)
-    
-    return G
-    
 def get_concessions(list_nodes: list,emp_type: dict)-> int: 
   # As concessões são todas emps marcadas como MANEJO,1
   # (fonte legal e extratores de madeira)
