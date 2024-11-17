@@ -23,10 +23,13 @@ tranporte_segundo_semestre= pd.concat([transportes_julho, transportes_agosto, tr
 
 df_tran_jan = transportes_janeiro[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
 df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
+
+df_tran_jan = df_tran_jan.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 df_tran = df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 
 #  Convertendo todos os nós para str
 df_tran = convert_id_to_str(df_tran)
+df_tran_jan = convert_id_to_str(df_tran)
 
 #  Criando dicionario com os tipos de cada empresa
 
@@ -46,6 +49,7 @@ for row in df_tran.iterrows():
         edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
 
 G.add_edges_from(edges)
+
 emp_type = {}
 nodes = pd.read_csv('data/nodes.csv')
 
@@ -53,18 +57,15 @@ nodes = pd.read_csv('data/nodes.csv')
 for i,node in nodes.iterrows():
   emp_type[node['CPF_CNPJ']] = node['Tipo']
 
-
+print("TimberFlow Segundo Semestre")
 get_timberflow(G, emp_type)
+print()
 
 
-# Apenas com janeiro
-print("Apenas com janeiro: ")
-
-emp_type_jan = {}
-nodes_jan = pd.read_csv('data/nodes_janeiro.csv')
 
 
-for i,node in nodes_jan.iterrows():
-  emp_type_jan[node['CPF_CNPJ']] = node['Tipo']
+
+
+
 
 
