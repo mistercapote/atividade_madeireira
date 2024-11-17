@@ -80,3 +80,22 @@ for i,node in nodes.iterrows():
 
 
 get_timberflow(G, emp_type)
+
+
+
+# Constrói árvores com a raiz sendo o manejo
+manejos = set(nodes[nodes['type'] == 'MANEJO']['id_emp'])
+finais = set(nodes[df_nodes['type'] == 'FINAL']['id_emp'])
+all_important_patios = set(nodes['id_emp'])
+valid_patios = set()
+
+# Verifica quais manejos chegam a pelo menos um final 
+for each_manejo in manejos:
+    T = nx.bfs_tree(G, each_manejo)
+    if finais.intersection(set(T.nodes())) != set():
+        # Salva os pátios que são conectados a um manejo e a um final
+        valid_patios.update(all_important_patios.intersection(set(T.nodes())))
+
+# Retira os pátios importantes e verifica o fluxo no subgrafo criado
+for each_valid_patio in valid_patios():
+    SG = nx.Subgraph
