@@ -1,3 +1,7 @@
+"""  
+Analisa as empresas importantes quanto ao grau
+Verifica se são pontos de articulação
+"""
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -22,11 +26,11 @@ df_tran = convert_id_to_str(df_tran)
 
 
 #  Empresas do tipo Patio q_ue transportam para empresas do tipo pátio
-df_pto = df_tran[(df_tran['TpRem'] == 'PTO_IBAMA') & (df_tran['TpDes'] == 'PTO_IBAMA')]
-df_pto = df_pto.groupby('CPF_CNPJ_Rem')['Volume'].sum().reset_index()
+df_pto = df_tran[(df_tran['TpRem'] == 'PTO_IBAMA') & (df_tran['TpDes'] == 'PTO_IBAMA')].rename(columns={'CPF_CNPJ_Rem': 'CPF_CNPJ'})
+df_pto = df_pto.groupby('CPF_CNPJ')['Volume'].sum().reset_index()
 
 nodes = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
-nodes_pto = set(df_pto['CPF_CNPJ_Rem'])
+nodes_pto = set(df_pto['CPF_CNPJ'])
 
 #  Criando grafo
 G = nx.DiGraph()
@@ -78,7 +82,7 @@ print(f"Número total de componentes conexas: {numero_original_de_componentes}")
 
 
 #  Adicionando  coluna de grau de um node
-df_pto['Grau'] = df_pto['CPF_CNPJ_Rem'].apply(lambda x: G.degree(x))
+df_pto['Grau'] = df_pto['CPF_CNPJ'].apply(lambda x: G.degree(x))
 
 
 #  Filtrando os outliers do tipo patio
@@ -95,7 +99,7 @@ components = []
 print()
 print("Analisando componentes dos possíveis pontos de articulação")
 print("...")
-for node in list(df_pto_outliers['CPF_CNPJ_Rem']):
+for node in list(df_pto_outliers['CPF_CNPJ']):
     SG = nx.subgraph_view(G, filter_node= lambda x: x != node)
     components.append(nx.number_weakly_connected_components(SG))
 print("Analisado")
@@ -105,6 +109,33 @@ df_pto_outliers.loc[df_pto_outliers['Conected_Components'] > numero_original_de_
 
 print()
 qtd_de_pontes_de_articulacao =  df_pto_outliers['is_bridge_linkage'].sum()
-print(f"Das empresas importantes, quantas são ponts de  de articulação: {qtd_de_pontes_de_articulacao}")
+print(f"Das empresas importantes, quantas são pontos de  de articulação: {qtd_de_pontes_de_articulacao}")
+
+# CNPJ/CPFS das empresas importantes
+importante_nodes = list(df_pto_outliers['CPF_CNPJ'])
+
+#  Componentes fracamente conexas
+weakly_connected_components = list(nx.weakly_connected_components(G))
+
+# result = [
+#     component
+#     for component in weakly_connected_components
+#     if len(set(component) & set(importante_nodes)) > 1
+# ]
+
+# num_components_with_important = len(result)
 
 
+result = [
+    set(component) & set(importante_nodes)
+    for component in weakly_connected_components
+    if len(set(component) & set(importante_nodes)) > 1
+]
+
+num_components_with_important = len(result)
+
+print(f"Numero de componentes conexas com mais de uma empresa importante: {num_components_with_important}")
+
+print(f"Conjuntos de nós importantes em componentes fracamente conexas:")
+for comp in result:
+    print(comp)

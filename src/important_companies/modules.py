@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-from data_cleaner import convert_id_to_str
+
 
 
 def get_concessions(list_nodes: list,emp_type: dict)-> int: 
