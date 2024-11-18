@@ -133,4 +133,29 @@ for comp in result:
     print(f"Vertice importante nessa componente conexa: {comp}")
     print()
     
+
+
+
+print
+# CNPJ/CPFS das empresas importantes
+importante_nodes = list(df_pto_outliers['CPF_CNPJ'])
+
+
+strongly_connected_components = list(nx.strongly_connected_components(G))
+
+# Filtrar componentes com mais de um nó importante, mantendo apenas os nós importantes
+result_strong  = [
+    set(component) & set(importante_nodes)
+    for component in strongly_connected_components
+    if len(set(component) & set(importante_nodes)) > 1
+]
+print(f'Numero de componentes fortemente conexas com mais de uma empresa importante: {len(result)} ')
+print(f"Conjuntos de nós importantes em componentes fortemente conexas:")
+
+for comp in result_strong:
+    print(f"Numero de vertices importantes nessa componente: {len(comp)}")
+    print("Vertices importantes nessa componente:")
+    print(comp)
+    print()
     
+print(30*"*")
