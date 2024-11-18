@@ -10,7 +10,7 @@ from tqdm import tqdm
 from modules import  get_concessions, get_sink_nodes, get_timberflow
 from data_cleaner import convert_id_to_str
 
-# transportes_junho = pd.read_csv('../data/df_06.csv')
+#  Lendo os csvs
 transportes_julho = pd.read_csv('data/df_07.csv')
 transportes_agosto = pd.read_csv('data/df_08.csv')
 transportes_setembro = pd.read_csv('data/df_09.csv')
@@ -22,19 +22,20 @@ tranporte_segundo_semestre= pd.concat([transportes_julho, transportes_agosto, tr
 
 df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
 df_tran= df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
-df_tran = convert_id_to_str(df_tran)
+df_tran = convert_id_to_str(df_tran) #normalizando os ids para string
 
 
 #  Empresas do tipo Patio q_ue transportam para empresas do tipo pátio
 df_pto = df_tran[(df_tran['TpRem'] == 'PTO_IBAMA') & (df_tran['TpDes'] == 'PTO_IBAMA')].rename(columns={'CPF_CNPJ_Rem': 'CPF_CNPJ'})
 df_pto = df_pto.groupby('CPF_CNPJ')['Volume'].sum().reset_index()
 
+# Dataframes com os nós do grafo
 nodes = set(df_tran['CPF_CNPJ_Rem']).union(set(df_tran['CPF_CNPJ_Des']))
 nodes_pto = set(df_pto['CPF_CNPJ'])
 
 #  Criando grafo
 G = nx.DiGraph()
-G.add_nodes_from(nodes)
+G.add_nodes_from(nodes) # Adicionando vertices
 
 
 # Cria as arestas com base nas transações e com peso = volume
@@ -43,19 +44,18 @@ for row in df_tran.iterrows():
     # Ignora laços
     if str(row[1]['CPF_CNPJ_Rem']) != str(row[1]['CPF_CNPJ_Des']):
         edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
-G.add_edges_from(edges)
+G.add_edges_from(edges) #Adicionando arestas
 
-
-
+# Dicionario para obter os graus de cada vertice (empresa) importante
 emp_pto_degree = {}
 
 for node in nodes_pto:
     emp_pto_degree[node]= G.degree(node)
 
+#  Lista com os graus  dos vertices importantes
 graus = list(emp_pto_degree.values())
 
-
-# print(f"Grau:    {graus}")
+# Criando o limite para determinar se uma empresa é importante
 q1 = np.quantile(graus, 0.25)  # Primeiro quartil (25%)
 q2 = np.quantile(graus, 0.5)   # Segundo quartil (50%, ou mediana)
 q3 = np.quantile(graus, 0.75)  # Terceiro quartil (75%)
@@ -90,10 +90,6 @@ df_pto['Grau'] = df_pto['CPF_CNPJ'].apply(lambda x: G.degree(x))
 df_pto_outliers = df_pto[df_pto['Grau']>= limite_superior]
 df_pto_outliers.loc[:, 'is_bridge_linkage'] = False
 
-
-# Analisando  o numero de componentes que 
-#  são obtidas ao remover os vertices pto 
-
 components = []
 
 print()
@@ -111,19 +107,13 @@ print()
 qtd_de_pontes_de_articulacao =  df_pto_outliers['is_bridge_linkage'].sum()
 print(f"Das empresas importantes, quantas são pontos de  de articulação: {qtd_de_pontes_de_articulacao}")
 
+#  Analisando componentes conexas com mais empresa importantes
+
 # CNPJ/CPFS das empresas importantes
 importante_nodes = list(df_pto_outliers['CPF_CNPJ'])
 
 #  Componentes fracamente conexas
 weakly_connected_components = list(nx.weakly_connected_components(G))
-
-# result = [
-#     component
-#     for component in weakly_connected_components
-#     if len(set(component) & set(importante_nodes)) > 1
-# ]
-
-# num_components_with_important = len(result)
 
 
 result = [
@@ -132,10 +122,15 @@ result = [
     if len(set(component) & set(importante_nodes)) > 1
 ]
 
+#  Componente fracamente conexas
 num_components_with_important = len(result)
 
 print(f"Numero de componentes conexas com mais de uma empresa importante: {num_components_with_important}")
 
 print(f"Conjuntos de nós importantes em componentes fracamente conexas:")
 for comp in result:
-    print(comp)
+    print(f"Quantidade de empresas importante nessa componente fracamente conexa: {len(comp)}")
+    print(f"Vertice importante nessa componente conexa: {comp}")
+    print()
+    
+    
