@@ -9,8 +9,16 @@ from tqdm import tqdm
 
 
 def get_concessions(list_nodes: list,emp_type: dict)-> int: 
-  # As concessões são todas emps marcadas como MANEJO,1
-  # (fonte legal e extratores de madeira)
+  """As concessões são todas emps marcadas como MANEJO,1
+  (fonte legal e extratores de madeira)
+
+  Args:
+      list_nodes (list): _description_
+      emp_type (dict): _description_
+
+  Returns:
+      int: _description_
+  """
 
   count = 0
   for node in list_nodes:
@@ -20,9 +28,18 @@ def get_concessions(list_nodes: list,emp_type: dict)-> int:
   return count
 
 def get_sink_nodes(graph: nx.graph, emp_type: dict)-> dict:
-  # If node is marked as FINAL, he is a sink
-  # It is the final destination of the timber chain
+  """If node is marked as FINAL, he is a sink
+  It is the final destination of the timber chain
 
+
+  Args:
+      graph (nx.graph): grafo
+      emp_type (dict): diciionario em que a chave é o id do nó
+      e o value é seu tipo (MANEJO, PATIO OU FINAL)
+
+  Returns:
+      dict: _description_
+  """
   nodes = {}
   for node in graph.nodes():
     if emp_type[node] == 'FINAL':
