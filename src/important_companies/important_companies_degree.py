@@ -18,6 +18,7 @@ transportes_outubro= pd.read_csv('data/df_10.csv')
 transportes_novembro = pd.read_csv('data/df_11.csv')
 transportes_dezembro = pd.read_csv('data/df_12.csv')
 
+
 tranporte_segundo_semestre= pd.concat([transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
 
 df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
@@ -134,13 +135,6 @@ for comp in result:
     print()
     
 
-
-
-print
-# CNPJ/CPFS das empresas importantes
-importante_nodes = list(df_pto_outliers['CPF_CNPJ'])
-
-
 strongly_connected_components = list(nx.strongly_connected_components(G))
 
 # Filtrar componentes com mais de um nó importante, mantendo apenas os nós importantes
@@ -159,3 +153,6 @@ for comp in result_strong:
     print()
     
 print(30*"*")
+# TODO v
+#  Ver o fluxo das componentes conexas com mais vertices
+
