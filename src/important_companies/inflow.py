@@ -84,19 +84,12 @@ for i,node in nodes.iterrows():
 
 
 get_timberflow(G, emp_type)
-
-
-
-
-
-
 #  Parte wal sug
-
 df_nodes = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem']].rename(columns={'CPF_CNPJ_Rem': 'CPF_CNPJ', 'TpRem': 'Tipo'})
 df_nodes = pd.concat([df_nodes, tranporte_segundo_semestre[['CPF_CNPJ_Des', 'TpDes']].rename(columns={'CPF_CNPJ_Des': 'CPF_CNPJ', 'TpDes': 'Tipo'})]).drop_duplicates('CPF_CNPJ')
 
 
-
+"""
 # Constrói árvores com a raiz sendo o manejo
 manejos = set(df_nodes[df_nodes['Tipo'] == 'MANEJO']['CPF_CNPJ'])
 finais = set(df_nodes[df_nodes['Tipo'] == 'FINAL']['CPF_CNPJ'])
@@ -136,3 +129,4 @@ for x in aux:
 
 print(len(components_aux))
 print(components_aux)
+"""
