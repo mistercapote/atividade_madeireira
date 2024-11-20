@@ -8,43 +8,25 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # Función para crear el grafo a partir de los datos de transporte
-
-# primeiro achar os caminhos com arestas juntas, depois retornar no codigo
-# com arestas separadas para ver se os caminhos encontrados fazem sentido
-# com relacao a data.
-
-def create_graph(transports, date_range, product_filter=None):
+def create_graph(transports):
     graph = {}
-    
-    # Filtrar el DataFrame según el tipo de producto y rango de fechas, si se proporcionan
-    if product_filter:
-        transports = transports[transports['id_product'] == product_filter]
-    if date_range:
-        transports = transports[(transports['date'] >= date_range[0]) & (transports['date'] <= date_range[1])]
-    
     for i, transport in tqdm(transports.iterrows()):
         id_emp_orig = transport['node_src']
         id_emp_dest = transport['node_dest']
         volume = transport['vol']
 
         if graph.get(id_emp_orig) is None:
-            graph[id_emp_orig] = {id_emp_dest: {'weight': volume}}
+            graph[id_emp_orig] = {id_emp_dest: {'weight': -volume}}
         else:
             if graph[id_emp_orig].get(id_emp_dest) is None:
-                graph[id_emp_orig][id_emp_dest] = {'weight': volume}
+                graph[id_emp_orig][id_emp_dest] = {'weight': -volume}
             else:
-                graph[id_emp_orig][id_emp_dest]['weight'] += volume
-
-    for source, targets in graph.items():
-        for target, volume in targets.items():
-            graph[source][target]['weight'] = -1 * volume['weight']
+                graph[id_emp_orig][id_emp_dest]['weight'] -= volume
 
     return nx.DiGraph(graph)
 
 # Leer los archivos CSV
-#transports = pd.read_csv('transports.csv')
 transports = pd.read_csv('edges.csv', low_memory=False)
-#emps = pd.read_csv('nodes.csv')
 emps = pd.read_csv('nodes.csv', low_memory=False)
 print("Datos Leidos")
 # Crear diccionario emp_type
@@ -53,8 +35,7 @@ for i, node in emps.iterrows():
     emp_type[node['id_emp']] = node['type']
 
 # Crear el grafo
-date_range = ('2017-01-01', '2017-05-30')
-graph = create_graph(transports, date_range)
+graph = create_graph(transports)
 G_orig_weight = graph.copy()
 
 # Función para obtener concesiones
@@ -167,38 +148,6 @@ for edge in G.edges:
     attrs[edge]['weight'] += -min_weight
 nx.set_edge_attributes(G, attrs)
 
-###################################################### ESTO LE METI #########################################################################################
-# def nodos_finales_prometedores(graph, emp_type):
-#     # 1. Filtrar los nodos que son 'FINAL'
-#     nodos_finales = [node for node in graph.nodes if emp_type.get(node) == 'FINAL']
-    
-#     # 2. Calcular el flujo de entrada a cada nodo final
-#     flujo_entrada = {}
-    
-#     for nodo_final in nodos_finales:
-#         total_in = 0
-#         for pred in graph.predecessors(nodo_final):  # Predecessors son los nodos que apuntan al nodo_final
-#             total_in += -graph[pred][nodo_final]['weight']  # Sumamos el peso (volumen) de cada arista que llega al nodo final
-        
-#         flujo_entrada[nodo_final] = total_in
-
-#     # 3. Ordenar los nodos finales por el flujo de entrada (de mayor a menor)
-#     nodos_finales_ordenados = sorted(flujo_entrada.items(), key=lambda x: x[1], reverse=True)
-
-#     return nodos_finales_ordenados
-
-# # Encontrar los nodos finales más prometedores
-# nodos_finales_ordenados = nodos_finales_prometedores(G_orig_weight, emp_type)
-
-# # Seleccionar el mejor nodo (el que tiene mayor flujo de entrada)
-# mnodo = nodos_finales_ordenados[0][0] if nodos_finales_ordenados else None  # Asegurar que la lista no esté vacía
-
-# # Imprimir el mejor nodo
-# print(f"El mejor nodo final es: {mnodo}")
-
-
-
-#################################################################################################################
 
 def nodos_con_mayor_proporcion_y_salida(graph, emp_type, n):
     # 1. Filtrar los nodos que tienen tipo que empiezan con 'PTO_'
@@ -268,16 +217,23 @@ print(f"El mejor nodo final es: {mnodo}")
 ###################################################### ESTO LE METI ##########################################################################################
 
 # Parámetros
-k = 2
+k = 3
 
 # Encontrar los caminos más probables
 paths, target_ordered = dijkstra(G, mnodo, emp_type, k)
 secondary_paths = eppistein_graph(G, mnodo, target_ordered, k, paths)
 
 # Mostrar caminos con pesos corregidos
+
+
 secondary_paths = original_path_cost(secondary_paths, graph_reversed)
+temp = pd.DataFrame(secondary_paths, columns=["Path", "Weight"])
+temp.to_csv("path.csv", index=False)
+
 for path, weight in secondary_paths:
     print(f"(FINAL) {' <- '.join(map(str, path))} (SOURCE) - Weight: {round(weight, 2)} M3")
+    
+
 
 # Filtrar nodos correspondientes a los caminos
 emps_filtered = emps[emps['id_emp'].isin(set([node for (path, weight) in secondary_paths for node in path]))].copy()
@@ -340,4 +296,3 @@ for path, weight in secondary_paths:
 
     # Mostrar el gráfico
     fig.show()
-
