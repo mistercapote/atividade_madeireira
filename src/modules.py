@@ -57,3 +57,4 @@ def get_timberflow(graph: nx.graph,emp_type: dict) -> None:
       total_out += path_weight(graph, [edge[0],edge[1]], weight='Volume')
 
   print(f'Inflow Vol(m3): {total_in} \nOut Vol(m3): {total_out} \nProportion: {total_out/total_in}')
+  return total_in, total_out
