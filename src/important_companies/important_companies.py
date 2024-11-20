@@ -3,7 +3,7 @@ import networkx as nx
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-from modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
+from modules import get_concessions, get_sink_nodes, get_timberflow
 from data_cleaner import convert_id_to_str
 
 # transportes_junho = pd.read_csv('../data/df_06.csv')
