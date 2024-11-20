@@ -4,8 +4,8 @@ import networkx as nx
 import numpy as np
 from networkx.classes.function import path_weight
 from tqdm import tqdm
-from modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
-from data_cleaner import convert_id_to_str
+from important_companies.modules import create_graph, get_concessions, get_sink_nodes, get_timberflow
+from important_companies.data_cleaner import convert_id_to_str
 
 
 transportes_janeiro =pd.read_csv('data/df_01.csv') 

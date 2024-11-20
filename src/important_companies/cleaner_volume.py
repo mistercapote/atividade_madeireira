@@ -127,28 +127,27 @@ for index, component in enumerate(components):
     except ZeroDivisionError:
         print("Sem entrada")
 
-    else:
-        print("#"*40)
+    print("#"*40)
+    
+    # Verifica o fluxo das componentes retirando os patios
+    for each_patio, each_component in emps_components.items():
+        if each_component == component:
+            dict_filter[each_patio] = [total_in, total_out]
+            total_in_sem = total_out_sem = 0
+            each_component.remove(each_patio)
+            SG = nx.subgraph_view(G, filter_node= lambda x: x in each_component)
+            aux_emp = {x: emps[x] for x in each_component}
 
-        # Verifica o fluxo das componentes retirando os patios
-        for each_patio, each_component in emps_components.items():
-            if each_component == component:
-                dict_filter[each_patio] = [total_in, total_out]
-                total_in = total_out = 0
-                each_component.remove(each_patio)
-                SG = nx.subgraph_view(G, filter_node= lambda x: x in each_component)
-                aux_emp = {x: emps[x] for x in each_component}
+            try: 
+                print('Pátio: ', each_patio)
+                total_in_sem, total_out_sem = get_timberflow(SG, aux_emp)
+            except ZeroDivisionError:
+                print("Sem entrada")
+            
+            
+            dict_filter[each_patio].extend([total_in_sem, total_out_sem])
 
-                try: 
-                    print('Pátio: ', each_patio)
-                    total_in, total_out = get_timberflow(SG, aux_emp)
-                except ZeroDivisionError:
-                    print("Sem entrada")
-                
-                else:
-                    dict_filter[each_patio].extend([total_in, total_out])
-
-print(len(dict_filter))
+print(dict_filter)
 
 # Atualiza o DataFrame para a analise com os dados do fluxo
 df_volume_analysis['Com_InFlow'] = df_volume_analysis['CPF_CNPJ'].map(lambda x: dict_filter[x][0])
