@@ -11,6 +11,13 @@ from modules import  get_concessions, get_sink_nodes, get_timberflow
 from data_cleaner import convert_id_to_str
 
 #  Lendo os csvs
+transportes_janeiro =  pd.read_csv('data/df_01.csv')
+transportes_feveiro = pd.read_csv('data/df_02.csv')
+transportes_marco = pd.read_csv('data/df_03.csv')
+transportes_abril = pd.read_csv('data/df_04.csv')
+transportes_maio = pd.read_csv('data/df_05.csv')
+transportes_junho = pd.read_csv('data/df_06.csv')
+
 transportes_julho = pd.read_csv('data/df_07.csv')
 transportes_agosto = pd.read_csv('data/df_08.csv')
 transportes_setembro = pd.read_csv('data/df_09.csv')
@@ -18,10 +25,11 @@ transportes_outubro= pd.read_csv('data/df_10.csv')
 transportes_novembro = pd.read_csv('data/df_11.csv')
 transportes_dezembro = pd.read_csv('data/df_12.csv')
 
+tranporte_ano= pd.concat([transportes_janeiro,transportes_feveiro,transportes_marco,transportes_abril,transportes_maio, transportes_junho, transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
 
-tranporte_segundo_semestre= pd.concat([transportes_julho, transportes_agosto, transportes_setembro, transportes_outubro, transportes_novembro, transportes_dezembro], ignore_index=True)
 
-df_tran = tranporte_segundo_semestre[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
+
+df_tran = tranporte_ano[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
 df_tran= df_tran.groupby(['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes'])['Volume'].sum().reset_index()
 df_tran = convert_id_to_str(df_tran) #normalizando os ids para string
 
