@@ -3,12 +3,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from modules import *
 import glob
+from data_cleaner import *
 
 
 # Guarda os dados dos csvs num DataFrame
-# path = '..\\data'
-# df = pd.concat(map(pd.read_csv, glob.glob(path + "/*.csv")))
-df = pd.concat(map(lambda f: pd.read_csv(f, low_memory=False), ['..\\data\\df_01.csv', '..\\data\\df_02.csv','..\\data\\df_03.csv', '..\\data\\df_04.csv', '..\\data\\df_05.csv', '..\\data\\df_06.csv']))
+path = '../data'
+df = pd.concat(map(pd.read_csv, glob.glob(path + "/*.csv")))
+# df = pd.concat(map(lambda f: pd.read_csv(f, low_memory=False), ['..\\data\\df_01.csv', '..\\data\\df_02.csv','..\\data\\df_03.csv', '..\\data\\df_04.csv', '..\\data\\df_05.csv', '..\\data\\df_06.csv']))
+df = convert_id_to_str(df)
 
 # Separa os dados das transações somando o volume das duplicadas
 df_tran = df[['CPF_CNPJ_Rem', 'TpRem', 'CPF_CNPJ_Des', 'TpDes', 'Volume']]
@@ -35,8 +37,8 @@ G.add_nodes_from(nodes)
 edges = []
 for row in df_tran.iterrows():
     # Ignora laços
-    if int(row[1]['CPF_CNPJ_Rem']) != int(row[1]['CPF_CNPJ_Des']):
-        edges.append((int(row[1]['CPF_CNPJ_Rem']), int(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
+    if str(row[1]['CPF_CNPJ_Rem']) != str(row[1]['CPF_CNPJ_Des']):
+        edges.append((str(row[1]['CPF_CNPJ_Rem']), str(row[1]['CPF_CNPJ_Des']), {'Volume': row[1]['Volume']}))
 G.add_edges_from(edges)
 
 
@@ -53,6 +55,7 @@ ls = median + 1.5*(q3-q1)
 
 # DataFrame com apenas as empresas importantes de acordo com o volume
 df_pto = df_pto[df_pto['Volume'] > ls]
+print(df_pto)
 
 # Verifica a quantidade de componentes conexas antes e depois de retirar os vertices
 print(nx.number_weakly_connected_components(G))
@@ -62,7 +65,7 @@ for node in list(df_pto['CPF_CNPJ']):
     components.append(nx.number_weakly_connected_components(SG))
 
 df_pto['Conected_Components'] = components
-
+print(df_pto)
 
 # Constrói árvores com a raiz sendo o manejo
 manejos = set(df_nodes[df_nodes['Tipo'] == 'MANEJO']['CPF_CNPJ'])
@@ -70,6 +73,8 @@ finais = set(df_nodes[df_nodes['Tipo'] == 'FINAL']['CPF_CNPJ'])
 all_important_patios = set(df_pto['CPF_CNPJ'])
 aux_valid_patios = set()
 valid_patios = set()
+
+df_pto.to_csv('Components_Analysis.csv')
 
 # Verifica 
 for each_manejo in manejos:
@@ -113,7 +118,6 @@ for each_component in aux:
                     components.append(each_component)
 
 df_volume_analysis['Tamanho_Componente'] = df_volume_analysis['CPF_CNPJ'].map(dict_filter).astype(dtype='int32')
-print(df_volume_analysis[df_volume_analysis['Tamanho_Componente'] == 202])
 
 # Verifica o fluxo nas componentes conexas
 for index, component in enumerate(components):
@@ -147,7 +151,6 @@ for index, component in enumerate(components):
             
             dict_filter[each_patio].extend([total_in_sem, total_out_sem])
 
-print(dict_filter)
 
 # Atualiza o DataFrame para a analise com os dados do fluxo
 df_volume_analysis['Com_InFlow'] = df_volume_analysis['CPF_CNPJ'].map(lambda x: dict_filter[x][0])
