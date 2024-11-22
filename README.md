@@ -11,5 +11,8 @@ Essa análise multidimensional busca contribuir para a detecção de atividades 
 - [Luiz Eduardo Bravin](https://github.com/mistercapote/)
 - [Jaime Willian Carneiro da Silva](https://github.com/JaimeWillianCarneiro)
 - [Walléria Simões Correia](https://github.com/WalleriaSimoes)
-  
+ - [Ximena Beatriz Gomez Flores](https://github.com/BXimenaGomez123)
+ 
+
+
 
