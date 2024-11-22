@@ -2,7 +2,7 @@ import pandas as pd
 import folium
 
 
-df = pd.read_csv('/home/ximena/Desktop/XiemenaPaperReview/data/mandioqueiro.csv', low_memory=False, dtype={'CPF_CNPJ_Rem': str, 'CPF_CNPJ_Des': str})
+df = pd.read_csv('data/df_01.csv', low_memory=False, dtype={'CPF_CNPJ_Rem': str, 'CPF_CNPJ_Des': str})
 
 
 nodos = {}
