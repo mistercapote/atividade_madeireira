@@ -1,7 +1,7 @@
 import pandas as pd
 
 df = pd.DataFrame()
-for i in range(1, 13):
+for i in range(1, 9):
     if i < 10: temp = pd.read_csv(f"data/df_0{i}.csv", low_memory=False)
     else: temp = pd.read_csv(f"data/df_{i}.csv", low_memory=False)
     df = pd.concat([df, temp], ignore_index=True)
